@@ -121,7 +121,13 @@ def generate_passwords(input_file, number=10):
     return sweetwords
 
 if len(sys.argv) != 4:
-    print "Error Input Format"
+    print "Generate the honeywords."
+    print ""
+    print "python solution3.py n inputfile outputfile"
+    print ""
+    print "     n               the number of passwords"
+    print "     inputfile       the filename of inputfile"
+    print "     outputfile      the filename of outputfile"
     sys.exit(1)
 sweetwords = generate_passwords(sys.argv[2], int(sys.argv[1]))
 write_csv(sys.argv[3], sweetwords)
