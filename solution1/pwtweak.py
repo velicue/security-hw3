@@ -124,7 +124,7 @@ def password_gen(input_f, n):
         sweetlist = []
         for pw in pw_list:
             list_isdigit = []
-            print pw
+            #print pw
             for c in pw:
                 list_isdigit.append(c.isdigit())
             if not sum(list_isdigit):
@@ -134,7 +134,7 @@ def password_gen(input_f, n):
                 n1=n/3
                 n2=n/3
                 n3=n-n/3-n/3
-            print nprand.permutation(gen(pw, n1, 5) + gen_digits(pw, n2) + gen_rand(pw, n3))
+            #print nprand.permutation(gen(pw, n1, 5) + gen_digits(pw, n2) + gen_rand(pw, n3))
             sweetlist.append(nprand.permutation(gen(pw, n1, 5) + gen_digits(pw, n2) + gen_rand(pw, n3)))
         return sweetlist
 
