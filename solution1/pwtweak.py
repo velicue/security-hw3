@@ -2,11 +2,9 @@ import string
 import random
 import sys
 import csv
-
+from datetime import date
+import numpy.random as nprand
 def gen(pw, k, t):
-    char = 1
-    no = 2
-    special = 3
     special_ex = '[~!@#$%^&*()_+{}":;\\\']+$'
     if t > len(pw):
         t = len(pw)
@@ -26,8 +24,71 @@ def gen(pw, k, t):
     return honey_list
 		
 
-def gen_digits(pw, k, t):
-	char = 1
+def gen_digits(pw, k):
+    pw_seg, pw_seg_isdigit = pwSeperate(pw)
+    pw_seg_cp = list(pw_seg)
+    idx_list = []
+    for idx, isdigit in enumerate(pw_seg_isdigit):
+        if isdigit :
+            idx_list.append(idx)
+
+    honey_list = []
+    for k in xrange(0, k):
+        for idx in idx_list:
+            seg = pw_seg[idx]
+            if (len(seg)==4 and ((seg[0:2] == "19") or (seg[0:2] == "20")) ):
+                pw_seg_cp[idx] = str(random.choice(range(1900, date.today().year)))
+            else:
+                randnu = random.randint(0, 10**len(seg) - 1)
+                pw_seg_cp[idx] = str(randnu)
+        honey_list.append(''.join(pw_seg_cp))
+    return honey_list
+
+def gen_rand(pw, k):
+    special_ex = ')!@#$%^&*([~_+{}":;\\\']+$'
+
+    honey_list = []
+    for k in range(0,k):
+        honey_tail = []
+        for c in pw:
+            if c.isdigit():
+                die = random.randint(0,3)
+                if(die == 0):
+                    honey_tail.append(random.choice(string.digits) )
+                elif (die == 1):
+                    honey_tail.append(c)
+                    honey_tail.append(c)
+                elif (die == 2):
+                    honey_tail.append("")
+                elif (die == 3):
+                    honey_tail.append(special_ex[int(c)])
+            elif c in special_ex:
+                die = random.randint(0,3)
+                if(die == 0):
+                    honey_tail.append(random.choice(special_ex) )
+                elif (die == 1):
+                    honey_tail.append(c)
+                    honey_tail.append(c)
+                elif (die == 2):
+                    honey_tail.append("")
+                elif (die == 3):
+                    idx = special.find(c)
+                    honey_tail.append(str(idx) if idx < 10 else c)
+            elif c in string.ascii_lowercase:
+                if(random.randint(0,1) == 0):
+                    honey_tail.append(c.upper())
+                else:
+                    honey_tail.append(c)
+            elif c in string.ascii_uppercase:
+                if(random.randint(0,1) == 0):
+                    honey_tail.append(c.lower())
+                else:
+                    honey_tail.append(c)
+            else:
+                honey_tail.append(random.choice(string.ascii_letters) )
+        honey_list.append(''.join(honey_tail))
+    return honey_list
+
 def pwSeperate(s):
 	list_isdigit = []
 	for c in s:
@@ -53,7 +114,8 @@ def write_csv(filename, values):
         writer.writerows(values)
 def password_gen(input_f, n):
 	pw_list = read_input_file(input_f)
-	return [gen(pw, n, 3) for pw in pw_list]
+        
+        return [ nprand.permutation(gen(pw, n/3, 5) + gen_digits(pw, n/3) + gen_rand(pw, n- n/3 -n/3)) for pw in pw_list]
 
 def main(argv):
     if len(sys.argv) != 4:
