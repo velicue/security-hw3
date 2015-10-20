@@ -17,7 +17,7 @@ def gen(pw, k, t):
 			if c.isdigit():
 				honey_tail.append(random.choice(string.digits) )
 			elif c in special_ex:
-				honey_tail.append(random.choice(special_ex) )
+				honey_tail.append(random.choice(special) )
 			else:
 				honey_tail.append(random.choice(string.ascii_letters) )
 		honey_list.append(pw[:len(pw)- t]+''.join(honey_tail))
@@ -51,8 +51,6 @@ def gen_rand(pw, k):
     for k in range(0,k):
         honey_tail = []
         for c in pw:
-            upper = random.randint(0,1)
-            lower = random.randint(0,1)
             if c.isdigit():
                 die = random.randint(0,3)
                 if(die == 0):
@@ -74,15 +72,15 @@ def gen_rand(pw, k):
                 elif (die == 2):
                     honey_tail.append("")
                 elif (die == 3):
-                    idx = special_ex.find(c)
+                    idx = special.find(c)
                     honey_tail.append(str(idx) if idx < 10 else c)
             elif c in string.ascii_lowercase:
-                if(random.randint(0,1) and upper ):
+                if(random.randint(0,1) == 0):
                     honey_tail.append(c.upper())
                 else:
                     honey_tail.append(c)
             elif c in string.ascii_uppercase:
-                if(random.randint(0,1) and lower):
+                if(random.randint(0,1) == 0):
                     honey_tail.append(c.lower())
                 else:
                     honey_tail.append(c)
@@ -116,25 +114,8 @@ def write_csv(filename, values):
         writer.writerows(values)
 def password_gen(input_f, n):
 	pw_list = read_input_file(input_f)
-        n1=n/3
-        n2=n/3
-        n3=n-n/3-n/3
-        sweetlist = []
-        for pw in pw_list:
-            list_isdigit = []
-            print pw
-            for c in pw:
-                list_isdigit.append(c.isdigit())
-            if not sum(list_isdigit):
-                n2 = 0
-                n3 = n-n/3
-            else:
-                n1=n/3
-                n2=n/3
-                n3=n-n/3-n/3
-            print nprand.permutation(gen(pw, n1, 5) + gen_digits(pw, n2) + gen_rand(pw, n3))
-            sweetlist.append(nprand.permutation(gen(pw, n1, 5) + gen_digits(pw, n2) + gen_rand(pw, n3)))
-        return sweetlist
+        
+        return [ nprand.permutation(gen(pw, n/3, 5) + gen_digits(pw, n/3) + gen_rand(pw, n- n/3 -n/3)) for pw in pw_list]
 
 def main(argv):
     if len(sys.argv) != 4:
