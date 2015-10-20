@@ -129,5 +129,8 @@ if len(sys.argv) != 4:
     print "     inputfile       the filename of inputfile"
     print "     outputfile      the filename of outputfile"
     sys.exit(1)
+    
+#python solution3.py 5 rockyou-withcount.txt honeywords.txt
+
 sweetwords = generate_passwords(sys.argv[2], int(sys.argv[1]))
 write_csv(sys.argv[3], sweetwords)

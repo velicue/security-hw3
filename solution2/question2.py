@@ -1,9 +1,14 @@
 import string
 import random
-import sys
+from random import randint
 import csv
+import sys
+import numpy
+import pickle
+from collections import defaultdict
 from datetime import date
 import numpy.random as nprand
+
 
 def gen(pw, k, t):
     special_ex = '[~!@#$%^&*()_+{}":;\\\']+$'
@@ -52,8 +57,6 @@ def gen_rand(pw, k):
     for k in range(0,k):
         honey_tail = []
         for c in pw:
-            upper = random.randint(0,1)
-            lower = random.randint(0,1)
             if c.isdigit():
                 die = random.randint(0,3)
                 if(die == 0):
@@ -78,12 +81,12 @@ def gen_rand(pw, k):
                     idx = special_ex.find(c)
                     honey_tail.append(str(idx) if idx < 10 else c)
             elif c in string.ascii_lowercase:
-                if(random.randint(0,1) and upper ):
+                if(random.randint(0,1) == 0):
                     honey_tail.append(c.upper())
                 else:
                     honey_tail.append(c)
             elif c in string.ascii_uppercase:
-                if(random.randint(0,1) and lower):
+                if(random.randint(0,1) == 0):
                     honey_tail.append(c.lower())
                 else:
                     honey_tail.append(c)
@@ -109,47 +112,98 @@ def pwSeperate(s):
 	#print pw_seg
 	return pw_seg, pw_seg_isdigit	
 
-def read_input_file(filename):
-    with open(filename) as f:
-        return [i.strip() for i in f.readlines() if len(i.strip()) > 0]
+
+
+
+### Util ###
+
+def get_char_type(char):
+    if char in string.ascii_letters:
+        return 0
+    elif char in string.digits:
+        return 1
+    else:
+        return 2
+
+def get_token_name(token):
+    return str(get_char_type(token[0])) + str(len(token))
+
 def write_csv(filename, values):
     with open(filename, 'w') as f:
         writer = csv.writer(f, lineterminator='\n')
         writer.writerows(values)
-def password_gen(input_f, n):
-	pw_list = read_input_file(input_f)
-        n1=n/3
-        n2=n/3
-        n3=n-n/3-n/3
-        sweetlist = []
-        for pw in pw_list:
-            list_isdigit = []
-            print pw
-            for c in pw:
-                list_isdigit.append(c.isdigit())
-            if not sum(list_isdigit):
-                n2 = 0
-                n3 = n-n/3
-            else:
-                n1=n/3
-                n2=n/3
-                n3=n-n/3-n/3
-            print nprand.permutation(gen(pw, n1, 5) + gen_digits(pw, n2) + gen_rand(pw, n3))
-            sweetlist.append(nprand.permutation(gen(pw, n1, 5) + gen_digits(pw, n2) + gen_rand(pw, n3)))
-        return sweetlist
 
-def main(argv):
-    if len(sys.argv) != 4:
-        print "Generate the honeywords."
-        print ""
-        print "python solution3.py n inputfile outputfile"
-        print ""
-        print "     n               the number of passwords"
-        print "     inputfile       the filename of inputfile"
-        print "     outputfile      the filename of outputfile"
-        sys.exit(1)
-    sweetwords = password_gen(argv[2], int(argv[1]))
-    write_csv(argv[3], sweetwords)
+### File Parse ###
 
-if __name__ == "__main__":
-    main(sys.argv)
+def read_rockyou_file():
+    with open("rockyou-withcount.txt") as f:
+        return [i.split() for i in f.readlines() if len(i.split()) == 2]
+
+def read_input_file(filename):
+    with open(filename) as f:
+        return [i.strip() for i in f.readlines() if len(i.strip()) > 0]
+
+### Password Generation ###
+
+def generate_passwords(input_file, number=10):
+    input_data = read_input_file(input_file)
+    print len(input_data) 
+    #sweetwords = [make_password(start, term, i, number) for i in input_data]
+    return input_data
+
+def get_honeywords(n, password, common_passwords):
+    honeywords = [''] * int(n)
+    if password in common_passwords:
+        # then return n randomly chosen passwords
+        #print 'password: ' , password
+        for h in range(int(n)):
+            w = password
+            while(w == password):
+                w = common_passwords[randint(0,len(common_passwords)-1)]    
+            #print w   
+            honeywords[h] = w
+        return honeywords
+    else:
+        b = (nprand.permutation(gen(password, n/3, 5) + gen_digits(password, n/3) + gen_rand(password, n- n/3 -n/3))).tolist()
+        return b
+
+
+if len(sys.argv) != 4:
+    print "Generate the honeywords."
+    print ""
+    print "python question2.py n inputfile outputfile"
+    print ""
+    print "     n               the number of passwords"
+    print "     inputfile       the filename of inputfile"
+    print "     outputfile      the filename of outputfile"
+    sys.exit(1)
+    
+    
+common_passwords = numpy.asarray(read_rockyou_file())[0:100,1]
+print 'imported', len(common_passwords) , 'common passwords'
+passwords = read_input_file(sys.argv[2])
+print 'imported', len(passwords) , 'passwords to tweak'
+#common_passwords = ['123456','12345','abcdefg']
+#if len(passwords) == 0:
+#passwords = ['123456','12345','123inputfile'] 
+
+honeywords = []
+
+for password in passwords:
+    print 'password: ' , password
+    b = get_honeywords(int(sys.argv[1]), password, common_passwords)
+    print b
+    honeywords.append( b )
+
+        
+
+print honeywords
+write_csv( sys.argv[3] , honeywords)
+
+
+#sweetwords = generate_passwords(sys.argv[2], int(sys.argv[1]))
+#write_csv(sys.argv[3], sweetwords)
+
+# python question2.py 5 rockyou-withcount.txt honeywords.txt
+
+
