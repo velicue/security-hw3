@@ -117,26 +117,33 @@ def write_csv(filename, values):
         writer = csv.writer(f, lineterminator='\n')
         writer.writerows(values)
 def password_gen(input_f, n):
-	pw_list = read_input_file(input_f)
-        n1=n/3
-        n2=n/3
-        n3=n-n/3-n/3
-        sweetlist = []
-        for pw in pw_list:
-            list_isdigit = []
-            #print pw
-            for c in pw:
-                list_isdigit.append(c.isdigit())
-            if not sum(list_isdigit):
-                n2 = 0
-                n3 = n-n/3
-            else:
-                n1=n/3
-                n2=n/3
-                n3=n-n/3-n/3
-            #print nprand.permutation(gen(pw, n1, 5) + gen_digits(pw, n2) + gen_rand(pw, n3))
-            sweetlist.append(nprand.permutation(gen(pw, n1, 5) + gen_digits(pw, n2) + gen_rand(pw, n3)))
-        return sweetlist
+    if n < 3:
+        n3 = n
+        n2 = n1 = 0
+        if n <= 1:
+            print "n need to be >= 2"
+            sys.exit(1)
+                #print "123"
+    pw_list = read_input_file(input_f)
+    n1=n/3
+    n2=n/3
+    n3=n-n/3-n/3
+    sweetlist = []
+    for pw in pw_list:
+        list_isdigit = []
+        #print pw
+        for c in pw:
+            list_isdigit.append(c.isdigit())
+        if not sum(list_isdigit):
+            n2 = 0
+            n3 = n-n/3
+        else:
+            n1=n/3
+            n2=n/3
+            n3=n-n/3-n/3
+        #print nprand.permutation(gen(pw, n1, 5) + gen_digits(pw, n2) + gen_rand(pw, n3))
+        sweetlist.append(nprand.permutation(gen(pw, n1, 5) + gen_digits(pw, n2) + gen_rand(pw, n3-1) + [pw]))
+    return sweetlist
 
 def main(argv):
     if len(sys.argv) != 4:
@@ -149,6 +156,7 @@ def main(argv):
         print "     outputfile      the filename of outputfile"
         sys.exit(1)
     sweetwords = password_gen(argv[2], int(argv[1]))
+    print sweetwords
     write_csv(argv[3], sweetwords)
 
 if __name__ == "__main__":
