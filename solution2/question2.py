@@ -10,107 +10,7 @@ from datetime import date
 import numpy.random as nprand
 
 
-def gen(pw, k, t):
-    special_ex = '[~!@#$%^&*()_+{}":;\\\']+$'
-    if t > len(pw):
-        t = len(pw)
-        
-	
-    honey_list = []
-    for k in range(0,k):
-		honey_tail = []
-		for c in pw[-t:]:
-			if c.isdigit():
-				honey_tail.append(random.choice(string.digits) )
-			elif c in special_ex:
-				honey_tail.append(random.choice(special_ex) )
-			else:
-				honey_tail.append(random.choice(string.ascii_letters) )
-		honey_list.append(pw[:len(pw)- t]+''.join(honey_tail))
-    return honey_list
-		
-
-def gen_digits(pw, k):
-    pw_seg, pw_seg_isdigit = pwSeperate(pw)
-    pw_seg_cp = list(pw_seg)
-    idx_list = []
-    for idx, isdigit in enumerate(pw_seg_isdigit):
-        if isdigit :
-            idx_list.append(idx)
-
-    honey_list = []
-    for k in xrange(0, k):
-        for idx in idx_list:
-            seg = pw_seg[idx]
-            if (len(seg)==4 and ((seg[0:2] == "19") or (seg[0:2] == "20")) ):
-                pw_seg_cp[idx] = str(random.choice(range(1900, date.today().year)))
-            else:
-                randnu = random.randint(0, 10**len(seg) - 1)
-                pw_seg_cp[idx] = str(randnu)
-        honey_list.append(''.join(pw_seg_cp))
-    return honey_list
-
-def gen_rand(pw, k):
-    special_ex = ')!@#$%^&*([~_+{}":;\\\']+$'
-
-    honey_list = []
-    for k in range(0,k):
-        honey_tail = []
-        for c in pw:
-            if c.isdigit():
-                die = random.randint(0,3)
-                if(die == 0):
-                    honey_tail.append(random.choice(string.digits) )
-                elif (die == 1):
-                    honey_tail.append(c)
-                    honey_tail.append(c)
-                elif (die == 2):
-                    honey_tail.append("")
-                elif (die == 3):
-                    honey_tail.append(special_ex[int(c)])
-            elif c in special_ex:
-                die = random.randint(0,3)
-                if(die == 0):
-                    honey_tail.append(random.choice(special_ex) )
-                elif (die == 1):
-                    honey_tail.append(c)
-                    honey_tail.append(c)
-                elif (die == 2):
-                    honey_tail.append("")
-                elif (die == 3):
-                    idx = special_ex.find(c)
-                    honey_tail.append(str(idx) if idx < 10 else c)
-            elif c in string.ascii_lowercase:
-                if(random.randint(0,1) == 0):
-                    honey_tail.append(c.upper())
-                else:
-                    honey_tail.append(c)
-            elif c in string.ascii_uppercase:
-                if(random.randint(0,1) == 0):
-                    honey_tail.append(c.lower())
-                else:
-                    honey_tail.append(c)
-            else:
-                honey_tail.append(random.choice(string.ascii_letters) )
-        honey_list.append(''.join(honey_tail))
-    return honey_list
-
-def pwSeperate(s):
-	list_isdigit = []
-	for c in s:
-		list_isdigit.append(c.isdigit())
-	list_isdigit.append(not list_isdigit[-1])
-	#print list_isdigit
-	pw_seg = []
-	pw_seg_isdigit = []
-	start = 0
-	for idx in range(0, len(list_isdigit) - 1):
-		if list_isdigit[idx] ^ list_isdigit[idx+1]:
-			pw_seg.append(s[start:idx+1])
-			pw_seg_isdigit.append(s[start:idx+1].isdigit())
-			start = idx+1
-	#print pw_seg
-	return pw_seg, pw_seg_isdigit	
+from pwtweak import gen_honeyword
 
 
 
@@ -137,7 +37,7 @@ def write_csv(filename, values):
 
 def read_rockyou_file():
     with open("rockyou-withcount.txt") as f:
-        return [i.split() for i in f.readlines() if len(i.split()) == 2]
+        return [i.split() for (j, i) in enumerate(f.readlines()) if j < 100 and len(i.split()) == 2]
 
 def read_input_file(filename):
     with open(filename) as f:
@@ -151,21 +51,60 @@ def generate_passwords(input_file, number=10):
     #sweetwords = [make_password(start, term, i, number) for i in input_data]
     return input_data
 
+leetDict = {"a": "@", "@":"a", "s": "$","$":"s" ,"e": "3","3":"e", "t": "7", "7":"t", "o": "0","0":"o" ,"i": "|", "|":"i", "1":"l", "l":"1"}
+
+def getEditingDistance(word1, word2):
+    len_1 = len(word1)
+    len_2 = len(word2)
+    x =[[0] * (len_2 + 1) for _ in range(len_1 + 1)]#the matrix whose last element ->edit distance
+    for i in range(0, len_1 + 1): #initialization of base case values
+        x[i][0] = i
+    for j in range(0, len_2 + 1):
+        x[0][j] = j
+    for i in range (1, len_1 + 1):
+        for j in range(1, len_2 + 1):
+            if word1[i - 1] == word2[j - 1]:
+                x[i][j] = x[i - 1][j - 1] 
+            elif word1[i - 1].lower() == word2[j - 1].lower():
+                x[i][j] = x[i - 1][j - 1] + 1
+            elif word1[i - 1].lower() in leetDict and leetDict[word1[i - 1].lower()] == word2[j - 1].lower():
+                x[i][j] = x[i - 1][j - 1] + 2
+            else:
+                x[i][j] = min(x[i][j - 1], x[i - 1][j], x[i - 1][j - 1]) + 6
+    return x[i][j]
+
 def get_honeywords(n, password, common_passwords):
-    honeywords = [''] * int(n)
-    if password in common_passwords:
+    honeywords = [password]
+
+    found = 0
+    for word in common_passwords:
+        t = getEditingDistance(word, password)
+        if t == 0:
+            found = 1
+            break
+        if t <= len(word):
+            found = 2
+
+    if found == 1:
         # then return n randomly chosen passwords
         #print 'password: ' , password
         for h in range(int(n)):
             w = password
-            while(w == password):
+            while(w in honeywords):
                 w = common_passwords[randint(0,len(common_passwords)-1)]    
             #print w   
-            honeywords[h] = w
+            honeywords += [w]
+        return honeywords
+    elif found == 2:
+        for h in range(int(n)):
+            w = gen_honeyword(common_passwords[randint(0,len(common_passwords)-1)])   
+            #print w   
+            honeywords += [w]
         return honeywords
     else:
-        b = (nprand.permutation(gen(password, n/3, 5) + gen_digits(password, n/3) + gen_rand(password, n- n/3 -n/3))).tolist()
-        return b
+        for i in range(int(n)):
+            honeywords += [gen_honeyword(password)]
+        return honeywords
 
 
 if len(sys.argv) != 4:
