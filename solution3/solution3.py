@@ -6,6 +6,7 @@ import numpy
 import pickle
 import wget
 import zipfile
+import os
 from collections import defaultdict
 
 ### Util ###
@@ -127,6 +128,12 @@ def load_pickles():
         term = pickle.load(terminal_file)
     return start, term
 
+def clean_up():
+    print "Cleaning Up!"
+    os.remove("grammar.pickle")
+    os.remove("terminal.pickle")
+    os.remove("pickles.zip")
+
 def make_password(start_pcfg, term_pcfg, origin_password, number=10):
     tough_nut_prob = 0.1
     passwords = [tough_nut() for i in range(int(number*tough_nut_prob))]
@@ -148,6 +155,7 @@ def generate_passwords(input_file, number=10):
     start, term = load_pickles()
     print "Generating Sweetwords!"
     sweetwords = [make_password(start, term, i, number) for i in input_data]
+    clean_up()
     return sweetwords
 
 if len(sys.argv) != 4:
