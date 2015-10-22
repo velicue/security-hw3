@@ -59,7 +59,7 @@ def parse_string_cfg(s):
     return grammar[1:]
 
 def read_rockyou_file():
-    with open("/Users/haotianz/Downloads/rockyou-withcount.txt") as f:
+    with open("rockyou-withcount.txt") as f:
         return [i.split() for i in f.readlines() if len(i.split()) == 2]
 
 def read_input_file(filename):
