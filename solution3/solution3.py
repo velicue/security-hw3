@@ -4,6 +4,8 @@ import csv
 import sys
 import numpy
 import pickle
+import wget
+import zipfile
 from collections import defaultdict
 
 ### Util ###
@@ -90,6 +92,41 @@ def tough_nut():
     chars = string.ascii_letters + string.digits + string.punctuation
     return "".join([chars[random.randrange(len(chars))] for i in range(40)])
 
+def gen_pickles():
+    train_data = read_rockyou_file()
+    grammar, terminal = parse_data_to_pcfg(train_data)
+    start, term = get_start_pcfg(grammar), get_term_pcfg(terminal)
+    with open("grammar.pickle", "wb") as grammar_file:
+        pickle.dump(start, grammar_file)
+    with open("terminal.pickle", "wb") as terminal_file:
+        pickle.dump(term, terminal_file)
+
+def download_pickles_zip():
+    print "Downloading Pickle!"
+    download_success = False
+    file_url = "https://s3.amazonaws.com/afkfurion/pickles.zip"
+    while not download_success:
+        try:
+            file_name = wget.download(file_url)
+            download_success = True
+            print
+        except Exception, e:
+            print e
+            print "Download Failed. Please check your network connection."
+
+def unzip_pickles():
+    print "Unzipping PCFG Pickles!"
+    with zipfile.ZipFile("pickles.zip", 'r') as f:
+        f.extractall()
+
+def load_pickles():
+    print "Loading Pickles!"
+    with open("grammar.pickle", "r") as grammar_file:
+        start = pickle.load(grammar_file)
+    with open("terminal.pickle", "r") as terminal_file:
+        term = pickle.load(terminal_file)
+    return start, term
+
 def make_password(start_pcfg, term_pcfg, origin_password, number=10):
     tough_nut_prob = 0.1
     passwords = [tough_nut() for i in range(int(number*tough_nut_prob))]
@@ -106,17 +143,10 @@ def make_password(start_pcfg, term_pcfg, origin_password, number=10):
 
 def generate_passwords(input_file, number=10):
     input_data = read_input_file(input_file)
-    #train_data = read_rockyou_file()
-    #grammar, terminal = parse_data_to_pcfg(train_data)
-    #start, term = get_start_pcfg(grammar), get_term_pcfg(terminal)
-    #with open("grammar.pickle", "wb") as grammar_file:
-    #    pickle.dump(start, grammar_file)
-    #with open("terminal.pickle", "wb") as terminal_file:
-    #    pickle.dump(term, terminal_file)
-    with open("grammar.pickle", "r") as grammar_file:
-        start = pickle.load(grammar_file)
-    with open("terminal.pickle", "r") as terminal_file:
-        term = pickle.load(terminal_file)
+    download_pickles_zip()
+    unzip_pickles()
+    start, term = load_pickles()
+    print "Generating Sweetwords!"
     sweetwords = [make_password(start, term, i, number) for i in input_data]
     return sweetwords
 
@@ -129,7 +159,7 @@ if len(sys.argv) != 4:
     print "     inputfile       the filename of inputfile"
     print "     outputfile      the filename of outputfile"
     sys.exit(1)
-    
+
 #python solution3.py 5 rockyou-withcount.txt honeywords.txt
 
 sweetwords = generate_passwords(sys.argv[2], int(sys.argv[1]))
